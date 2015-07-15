@@ -1,0 +1,15 @@
+{
+  "name": "pinboard-bot",
+  "version": "1.0.0",
+  "description": "a twitter bot to post my pinboard links",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "twitter",
+    "pinboard"
+  ],
+  "author": "Tyler Powers",
+  "license": "ISC"
+}
