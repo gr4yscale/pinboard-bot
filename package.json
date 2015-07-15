@@ -11,5 +11,9 @@
     "pinboard"
   ],
   "author": "Tyler Powers",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^1.2.0",
+    "twit": "^2.1.0"
+  }
 }
