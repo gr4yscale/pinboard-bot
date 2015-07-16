@@ -6,6 +6,9 @@ function addTagsArrayToPosts(posts) {
   for (var i = 0; i < posts.length; i++) {
     var post = posts[i];
     post.tagsArray = post.tags.split(' ');
+    // rename hash key to _id
+    Object.defineProperty(post, '_id', Object.getOwnPropertyDescriptor(post, 'hash'));
+    delete post['hash'];
   }
   return posts;
 }
