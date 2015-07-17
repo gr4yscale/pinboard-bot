@@ -15,11 +15,11 @@ function addTagsArrayToPosts(posts) {
 
 module.exports = function(callback) {
   // fetch data locally during dev
-  var mockDataPosts = JSON.parse(fs.readFileSync('./posts-sampledata.json', 'utf8'));
-  if(callback) {
-      callback(addTagsArrayToPosts(mockDataPosts));
-  }
-  return;
+  //var mockDataPosts = JSON.parse(fs.readFileSync('./posts-sampledata.json', 'utf8'));
+  //if(callback) {
+      //callback(addTagsArrayToPosts(mockDataPosts));
+  //}
+  //return;
 
   var user = process.env.PINBOARD_USER;
   var token = process.env.PINBOARD_OAUTH_TOKEN;
