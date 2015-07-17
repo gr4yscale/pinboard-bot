@@ -42,4 +42,17 @@ PinboardDataStore.prototype.findPostWhichHasNotBeenTweetedWithTag = function(tag
   });
 };
 
+PinboardDataStore.prototype.updatePostWithHasBeenTweetedFlag = function(post) {
+  connect(function(db) {
+    var collection = db.collection('posts');
+    // posts which have not been tweeted do not have the 'hasBeenTweeted' key
+    collection.update({"_id" : post['_id']},
+                      { $set: {'hasBeenTweeted':true}},
+                      function(err, objects) {
+                        if (err) { console.log(err); return; } // TODO: handle better in the future
+                        db.close();
+                      });
+  });
+};
+
 module.exports = new PinboardDataStore();
