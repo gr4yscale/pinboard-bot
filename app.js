@@ -7,7 +7,7 @@ var express = require('express');
 var app = express();
 
 app.get('/tagsToPost/:tagsToPost', function(req, res) {
-  bot.config.currentTagsToPost = req.params.tagsToPost;
+  bot.config.currentTagsToPost = req.params.tagsToPost.split(',').map(function(str){ return str.trim(); });
   res.send('Updated tags to post: ' + bot.config.currentTagsToPost);
 });
 
