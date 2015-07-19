@@ -32,5 +32,6 @@ function updateInterval() {
   setTimeout(tweet, tweetInterval + Math.floor(Math.random() * tweetIntervalVariance));
 }
 
-var server = app.listen(3000);
 tweet();
+
+module.exports = app;
