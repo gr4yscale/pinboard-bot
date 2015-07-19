@@ -8,30 +8,32 @@ var pinboardDataStore = require('./pinboard-datastore.js');
 
 var defaultConfig = {
   pinboardFetchInterval : 1000 * 60 * 60,
-  currentTagToPost : 'algorithm'
+  currentTagsToPost : ['open-frameworks','techart-group','creative-agency', 'projection-mapping']
 };
 
-var TwitterBot = function (config) {
+function TwitterBot(config) {
   this.config = defaultConfig;
   if (config) {
     for (var key in defaultConfig) this.config[key] = config[key];
   }
 
-  fetchPinboardDataAndUpdateDataStore();
+  this.fetchPinboardDataAndUpdateDataStore();
   
   setInterval(function() {
     console.log('Fetching Pinboard data');
-    fetchPinboardDataAndUpdateDataStore();
-  }, this.pinboardFetchInterval);
-};
+    this.fetchPinboardDataAndUpdateDataStore();
+  }, this.config.pinboardFetchInterval);
+}
 
-TwiterBot.fetchPinboardDataAndUpdateDataStore = function() {
+TwitterBot.prototype.fetchPinboardDataAndUpdateDataStore = function() {
   fetchPinboardData(function(posts){
     pinboardDataStore.updateWithPosts(posts);
   });
 };
 
-TwitterBot.tweetRandomPostForCurrentTag = function () {
+TwitterBot.prototype.tweetRandomPostForCurrentTag = function () {
+  if (!this.config.currentTagsToPost) return;
+
   var bitly = new Bitly('gr4yscalebitly', process.env.BITLY_API_KEY);
   
   var T = new Twit({
@@ -40,29 +42,44 @@ TwitterBot.tweetRandomPostForCurrentTag = function () {
     access_token: process.env.TWITTER_ACCESS_TOKEN,
     access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
   });
-  
-  pinboardDataStore.findPostWhichHasNotBeenTweetedWithTag(this.config.currentTagToPost, function(post) {
+
+  var tag = tagToPost(this.config.currentTagsToPost);
+
+  pinboardDataStore.findPostWhichHasNotBeenTweetedWithTag(tag, function(post) {
     if (post !== undefined) {
       bitly.shorten(post.href, function(err, response) {
         if (err) console.log(err); // TODO: hande better
         
-        var tweet = _formattedTweetWithPostAndURL(post, response.data.url);
+        var tweet = formattedTweetWithPostAndURL(post, response.data.url);
         T.post('statuses/update', { status: tweet }, function(err, data, response){
           if (err) console.log(err); // TODO: hande better
           pinboardDataStore.updatePostWithHasBeenTweetedFlag(post);
           console.log('tweeted!');
+          console.log(post);
         });
       });
     } else {
+      console.log('There were no posts for this tag:' + tag);
       // DM or otherwise notify me that we've tweeted all of the posts for this tag
     }
   });
 };
 
-var _formattedTweetWithPostAndURL = function(post, url) {
+var tagToPost = function(currentTagsToPost) {
+  var tag;
+  if (Array.isArray(currentTagsToPost)) {
+    var randIndex = Math.floor(Math.random() * currentTagsToPost.length);
+    tag = currentTagsToPost[randIndex];
+  } else {
+    tag = currentTagsToPost;
+  }
+  return tag;
+};
+
+var formattedTweetWithPostAndURL = function(post, url) {
   var tweet = '';
   var shortenedurl = url;
-  var truncatedTitle = post.description.substring(0, 137 - shortenedurl.length); // 137 to make room for hyphens and a space
+  var truncatedTitle = post.description.substring(0, 134 - shortenedurl.length); // 137 to make room for hyphens and a space
   // do we need to truncate more for ellipses?
   if (truncatedTitle.length > (134 - shortenedurl.length)) {
     tweet = truncatedTitle + '... - ' + shortenedurl;
