@@ -1,7 +1,7 @@
 var mongoClient = require('mongodb').MongoClient;
 
 function connect (callback) {
-  var url = 'mongodb://localhost:27017/pinboardTweeter';
+  var url = 'mongodb://' + process.env.MONGODB_HOST + ':' + process.emv.MONGODB_PORT + '/' + process.env.MONGODB_DATABASE;
   mongoClient.connect(url, function(err, db) {
     if (!err) {
       console.log('connected!');
