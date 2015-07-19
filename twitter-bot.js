@@ -34,7 +34,7 @@ TwitterBot.prototype.fetchPinboardDataAndUpdateDataStore = function() {
 TwitterBot.prototype.tweetRandomPostForCurrentTag = function () {
   if (!this.config.currentTagsToPost) return;
 
-  var bitly = new Bitly('gr4yscalebitly', process.env.BITLY_API_KEY);
+  var bitly = new Bitly(process.env.BITLY_USERNAME, process.env.BITLY_API_KEY);
   
   var T = new Twit({
     consumer_key: process.env.TWITTER_CONSUMER_KEY,
