@@ -1,7 +1,9 @@
 var TwitterBot = require('./twitter-bot.js');
 var bot = new TwitterBot();
-var tweetInterval = 1000 * 60 * 30; // every 10 mins
-var tweetIntervalVariance = 1000 * 60 * 5;
+
+var tweetInterval = 1000 * 60 * 30; // every 30 mins
+var tweetIntervalVariance = 0; // default to no variance
+var timeouts = [];
 
 var express = require('express');
 var app = express();
@@ -14,22 +16,31 @@ app.get('/tagsToPost/:tagsToPost', function(req, res) {
 app.get('/interval/:interval', function(req, res) {
   tweetInterval = parseFloat(req.params.interval) * 1000 * 60;
   res.send('Updated tweet interval: ' + tweetInterval / 1000 / 60);
-  updateInterval();
+  updateTweetInterval();
 });
 
 app.get('/intervalVariance/:intervalVariance', function(req, res) {
   tweetIntervalVariance = parseFloat(req.params.intervalVariance) * 1000 * 60;
   res.send('Updated tweet interval variance: ' + tweetIntervalVariance / 1000 / 60);
-  updateInterval();
+  updateTweetInterval();
 });
 
 function tweet() {
   bot.tweetRandomPostForCurrentTag();
-  updateInterval();
+  updateTweetInterval();
 }
 
-function updateInterval() {
-  setTimeout(tweet, tweetInterval + Math.floor(Math.random() * tweetIntervalVariance));
+function updateTweetInterval() {
+  clearTimeouts();
+  var intervalWithVariance = tweetInterval + Math.floor(Math.random() * tweetIntervalVariance);
+  timeouts.push(setTimeout(tweet, intervalWithVariance));
+}
+
+function clearTimeouts() {
+  for (var i = 0; i < timeouts.length; i++) {
+    clearTimeout(timeouts[i]);
+  }
+  timeouts = [];
 }
 
 tweet();
