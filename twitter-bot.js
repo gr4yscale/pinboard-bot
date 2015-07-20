@@ -12,6 +12,7 @@ var defaultConfig = {
 };
 
 function TwitterBot(config) {
+  var self = this;
   this.config = defaultConfig;
   if (config) {
     for (var key in defaultConfig) this.config[key] = config[key];
@@ -21,8 +22,8 @@ function TwitterBot(config) {
   
   setInterval(function() {
     console.log('Fetching Pinboard data');
-    this.fetchPinboardDataAndUpdateDataStore();
-  }, this.config.pinboardFetchInterval);
+    self.fetchPinboardDataAndUpdateDataStore();
+  },self.config.pinboardFetchInterval);
 }
 
 TwitterBot.prototype.fetchPinboardDataAndUpdateDataStore = function() {
