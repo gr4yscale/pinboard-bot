@@ -34,6 +34,7 @@ function updateTweetInterval() {
   clearTimeouts();
   var intervalWithVariance = tweetInterval + Math.floor(Math.random() * tweetIntervalVariance);
   timeouts.push(setTimeout(tweet, intervalWithVariance));
+  console.log('Updated tweet interval: ' + intervalWithVariance);
 }
 
 function clearTimeouts() {
