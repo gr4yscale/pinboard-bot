@@ -23,8 +23,9 @@ module.exports = function(callback) {
 
   var user = process.env.PINBOARD_USER;
   var token = process.env.PINBOARD_OAUTH_TOKEN;
+  var uri = 'https://api.pinboard.in/v1/posts/all?auth_token=' + user + ':' + token + '&format=json';
 
-  request('https://api.pinboard.in/v1/posts/all?auth_token=' + user + ':' + token + '&format=json', function (error, response, body) {
+  request(uri, function (error, response, body) {
     if (!error && response.statusCode == 200) {
       if(callback) {
         var posts = JSON.parse(body);

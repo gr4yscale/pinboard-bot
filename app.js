@@ -1,7 +1,7 @@
 var TwitterBot = require('./twitter-bot.js');
 var bot = new TwitterBot();
 
-var tweetInterval = 1000 * 60 * 30; // every 30 mins
+var tweetInterval = 1000 * 30; // every 30 secs
 var tweetIntervalVariance = 0; // default to no variance
 var timeouts = [];
 
@@ -34,7 +34,7 @@ function updateTweetInterval() {
   clearTimeouts();
   var intervalWithVariance = tweetInterval + Math.floor(Math.random() * tweetIntervalVariance);
   timeouts.push(setTimeout(tweet, intervalWithVariance));
-  console.log('Updated tweet interval: ' + intervalWithVariance);
+  console.log('Updated tweet interval: ' + (intervalWithVariance / 1000 / 60));
 }
 
 function clearTimeouts() {
