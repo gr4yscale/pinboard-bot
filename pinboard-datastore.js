@@ -21,7 +21,7 @@ PinboardDataStore.prototype.updateWithPosts = function(posts) {
     }
 
     bulkOp.execute(function(err, result) {
-      if (err) console.log(err.toString()); // TODO handle error better
+      if (err) console.log('Error bulk updating posts collection: ' + err.toString());
       db.close();
     });
   });
@@ -33,9 +33,12 @@ PinboardDataStore.prototype.findPostWhichHasNotBeenTweetedWithTag = function(tag
     // posts which have not been tweeted do not have the 'hasBeenTweeted' key
     collection.find({hasBeenTweeted:{$exists: false}, tagsArray:tag})
               .toArray(function(err, objects) {
-                if (err) { console.log(err); return; } // handle better in the future
-                var randIndex = Math.floor(Math.random() * objects.length);
-                if (callback) callback(objects[randIndex]);
+                if (err) {
+                  console.log('Error finding a not-tweeted post! ' + err.toString());
+                } else {
+                  var randIndex = Math.floor(Math.random() * objects.length);
+                  if (callback) callback(objects[randIndex]);
+                }
                 db.close();
               });
   });
@@ -48,7 +51,7 @@ PinboardDataStore.prototype.updatePostWithHasBeenTweetedFlag = function(post) {
     collection.update({"_id" : post['_id']},
                       { $set: {'hasBeenTweeted':true}},
                       function(err, objects) {
-                        if (err) { console.log(err); return; } // TODO: handle better in the future
+                        if (err) { console.log('Error updating hasBeenTweeted flag! ' + err.toString()); }
                         db.close();
                       });
   });
