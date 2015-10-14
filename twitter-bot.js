@@ -3,8 +3,8 @@ require('dotenv').load();
 
 var Twit = require('twit');
 var Bitly = require('bitly');
-var fetchPinboardData = require('./fetch-pinboard-data.js');
-var pinboardDataStore = require('./pinboard-datastore.js');
+var fetchData = require('./fetch-pinboard-data.js');
+var ds = require('./pinboard-datastore.js');
 
 var defaultConfig = {
   pinboardFetchInterval : 1000 * 60 * 60,
@@ -12,63 +12,95 @@ var defaultConfig = {
 };
 
 function TwitterBot(config) {
-  var self = this;
 
   this.config = defaultConfig;
   if (config) {
     for (var key in defaultConfig) this.config[key] = config[key];
   }
 
-  this.fetchPinboardDataAndUpdateDataStore();
+  var self = this;
+  self.refreshData();
   
   setInterval(function() {
-    console.log('Fetching Pinboard data');
-    self.fetchPinboardDataAndUpdateDataStore();
-  },
-  self.config.pinboardFetchInterval);
+    self.refreshData();
+  },self.config.pinboardFetchInterval);
 }
 
-TwitterBot.prototype.fetchPinboardDataAndUpdateDataStore = function() {
-  fetchPinboardData(function(posts){
-    pinboardDataStore.updateWithPosts(posts);
+// public
+
+TwitterBot.prototype.refreshData = function() {
+  fetchData()
+  .then(function(posts){
+    return ds.updateWithPosts(posts);
+  })
+  .catch(function(err) {
+    console.log('Error fetching pinboard data and updating data store ' + err);
   });
 };
 
 TwitterBot.prototype.tweetRandomPostForCurrentTag = function () {
   if (!this.config.currentTagsToPost) return;
-
-  var bitly = new Bitly(process.env.BITLY_USERNAME, process.env.BITLY_API_KEY);
-  
-  var T = new Twit({
-    consumer_key: process.env.TWITTER_CONSUMER_KEY,
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-    access_token: process.env.TWITTER_ACCESS_TOKEN,
-    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
-  });
-
   var tag = tagToPost(this.config.currentTagsToPost);
+  
+  ds.findNextPostToTweet(tag)
+    .then(function(post) {
+        return shortenUrl(post)
+        .then(function(shortenedUrl) {
+          return tweetPost(post, shortenedUrl);
+        })
+        .then(function(post) {
+          return ds.flagPostAsTweeted(post);
+        });
+    })
+    .catch(function(err) {
+      // on 'no post found / we've tweeted all of the posts for this tag' error, DM me on twitter or ensure papertrail notification
+      console.log('Error tweeting random post for current tag! ' + err);
+      console.log('or....maybe... ');
+      console.log('There were no posts for this tag:' + tag); // TOFIX: being lazy and not checking the exact error for now
+    });
+};
 
-  pinboardDataStore.findPostWhichHasNotBeenTweetedWithTag(tag, function(post) {
-    if (post !== undefined) {
+// private
+
+var tweetPost = function(post, shortenedUrl) {
+  return new Promise(function(resolve, reject) {
+      var tweet = formattedTweetWithPostAndURL(post, shortenedUrl);
+      console.log('Tweet preview before posting: ' + tweet);
+
+      var T = new Twit({
+        consumer_key: process.env.TWITTER_CONSUMER_KEY,
+        consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+        access_token: process.env.TWITTER_ACCESS_TOKEN,
+        access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+      });
+
+      T.post('statuses/update', { status: tweet }, function(err, data, post, shortenedUrl){
+        if (err) {
+          console.log('Error tweeting: ' + err.toString());
+          reject(err);
+        } else {
+          console.log('Tweeted! ' + tweet);
+          resolve(post);
+        }
+      });
+  });
+};
+
+var shortenUrl = function(post) {
+  console.log('Going to create a short url for post: ' + post);
+  return new Promise(function(resolve, reject) {
+      if (post === undefined) reject(); // TOFIX: appropriate error here
+
+      var bitly = new Bitly(process.env.BITLY_USERNAME, process.env.BITLY_API_KEY);
+      
       bitly.shorten(post.href, function(err, response) {
         if (err) {
           console.log('Error getting a shortened URL from bit.ly: ' + err.toString());
+          reject(err);
         } else {
-          var tweet = formattedTweetWithPostAndURL(post, response.data.url);
-          T.post('statuses/update', { status: tweet }, function(err, data, response){
-            if (err) {
-              console.log('Error tweeting: ' + err.toString());
-            } else {
-              pinboardDataStore.updatePostWithHasBeenTweetedFlag(post);
-              console.log('Tweeted! ' + tweet);
-            }
-          });
+          resolve(response.data.url);
         }
-      });
-    } else {
-      console.log('There were no posts for this tag:' + tag);
-      // DM or otherwise notify me that we've tweeted all of the posts for this tag; for now papertrail notifies me of this log message
-    }
+    });
   });
 };
 
