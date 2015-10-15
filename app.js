@@ -44,6 +44,8 @@ function clearTimeouts() {
   timeouts = [];
 }
 
-tweet();
+//tweet();
+
+bot.logRandomTweetForDebug();
 
 module.exports = app;

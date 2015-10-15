@@ -80,4 +80,24 @@ PinboardDataStore.prototype.flagPostAsTweeted = function(post) {
   });
 };
 
+PinboardDataStore.prototype.allPosts = function() {
+  var self = this;
+  return new Promise(function(resolve, reject) {
+    self.db.then(function(db) {
+      var collection = db.collection('posts');
+      // posts which have not been tweeted do not have the 'hasBeenTweeted' key
+      collection.find()
+                .batchSize(5000)
+                .toArray(function(err, objects) {
+                  if (err) {
+                    console.log('Error finding a not-tweeted post! ' + err.toString());
+                    reject(err);
+                  } else {
+                    resolve(objects);
+                  }
+                });
+    });
+  });
+};
+
 module.exports = new PinboardDataStore();

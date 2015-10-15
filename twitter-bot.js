@@ -5,6 +5,7 @@ var Twit = require('twit');
 var Bitly = require('bitly');
 var fetchData = require('./fetch-pinboard-data.js');
 var ds = require('./pinboard-datastore.js');
+var fs = require('fs');
 
 var defaultConfig = {
   pinboardFetchInterval : 1000 * 60 * 60,
@@ -57,6 +58,23 @@ TwitterBot.prototype.tweetRandomPostForCurrentTag = function () {
       console.log('Error tweeting random post for current tag! ' + err);
       console.log('or....maybe... ');
       console.log('There were no posts for this tag:' + tag); // TOFIX: being lazy and not checking the exact error for now
+    });
+};
+
+TwitterBot.prototype.logRandomTweetForDebug = function () {
+  var logString = '';
+  ds.allPosts()
+    .then(function(posts) {
+      for (i = 0; i < posts.length; i++) {
+        var post = posts[i];
+        var tweet = formattedTweetWithPostAndURL(post, 'bit.ly/1VhlCog');
+        logString = logString + tweet + '\n' + post.description + '\n' + JSON.stringify(post.tagsArray) + '\n' + post.href + '\n\n';
+        //console.log(logString);
+      }
+      fs.writeFileSync('./debugTweetsPreviews3.txt', logString);
+    })
+    .catch(function(err) {
+      console.log('Error logging random tweet ' + err);
     });
 };
 
@@ -114,6 +132,7 @@ var tagToPost = function(currentTagsToPost) {
   }
   return tag;
 };
+
 
 var formattedTweetWithPostAndURL = function(post, url) {
   var tweet = '';
